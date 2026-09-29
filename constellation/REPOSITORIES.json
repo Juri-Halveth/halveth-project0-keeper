@@ -1,0 +1,175 @@
+﻿{
+    "value":  [
+                  {
+                      "defaultBranchRef":  {
+                                               "name":  "main"
+                                           },
+                      "isArchived":  false,
+                      "name":  "halveth-scarlet",
+                      "nameWithOwner":  "Juri-Halveth/halveth-scarlet",
+                      "url":  "https://github.com/Juri-Halveth/halveth-scarlet",
+                      "visibility":  "PUBLIC"
+                  },
+                  {
+                      "defaultBranchRef":  {
+                                               "name":  "main"
+                                           },
+                      "isArchived":  false,
+                      "name":  "Juri-Halveth",
+                      "nameWithOwner":  "Juri-Halveth/Juri-Halveth",
+                      "url":  "https://github.com/Juri-Halveth/Juri-Halveth",
+                      "visibility":  "PUBLIC"
+                  },
+                  {
+                      "defaultBranchRef":  {
+                                               "name":  "main"
+                                           },
+                      "isArchived":  false,
+                      "name":  "Juri-Halveth.github.io",
+                      "nameWithOwner":  "Juri-Halveth/Juri-Halveth.github.io",
+                      "url":  "https://github.com/Juri-Halveth/Juri-Halveth.github.io",
+                      "visibility":  "PUBLIC"
+                  },
+                  {
+                      "defaultBranchRef":  {
+                                               "name":  "main"
+                                           },
+                      "isArchived":  false,
+                      "name":  "open-research-branches",
+                      "nameWithOwner":  "Juri-Halveth/open-research-branches",
+                      "url":  "https://github.com/Juri-Halveth/open-research-branches",
+                      "visibility":  "PUBLIC"
+                  },
+                  {
+                      "defaultBranchRef":  {
+                                               "name":  "codex/cinema-archive"
+                                           },
+                      "isArchived":  false,
+                      "name":  "halveth-album-cinema",
+                      "nameWithOwner":  "Juri-Halveth/halveth-album-cinema",
+                      "url":  "https://github.com/Juri-Halveth/halveth-album-cinema",
+                      "visibility":  "PRIVATE"
+                  },
+                  {
+                      "defaultBranchRef":  {
+                                               "name":  "codex/public-release"
+                                           },
+                      "isArchived":  false,
+                      "name":  "halveth-morrowind-genesis",
+                      "nameWithOwner":  "Juri-Halveth/halveth-morrowind-genesis",
+                      "url":  "https://github.com/Juri-Halveth/halveth-morrowind-genesis",
+                      "visibility":  "PUBLIC"
+                  },
+                  {
+                      "defaultBranchRef":  {
+                                               "name":  "main"
+                                           },
+                      "isArchived":  false,
+                      "name":  "halveth-project0-keeper",
+                      "nameWithOwner":  "Juri-Halveth/halveth-project0-keeper",
+                      "url":  "https://github.com/Juri-Halveth/halveth-project0-keeper",
+                      "visibility":  "PUBLIC"
+                  },
+                  {
+                      "defaultBranchRef":  {
+                                               "name":  "main"
+                                           },
+                      "isArchived":  false,
+                      "name":  "mein-lernportal",
+                      "nameWithOwner":  "Juri-Halveth/mein-lernportal",
+                      "url":  "https://github.com/Juri-Halveth/mein-lernportal",
+                      "visibility":  "PUBLIC"
+                  },
+                  {
+                      "defaultBranchRef":  {
+                                               "name":  "main"
+                                           },
+                      "isArchived":  false,
+                      "name":  "lernstudio",
+                      "nameWithOwner":  "Juri-Halveth/lernstudio",
+                      "url":  "https://github.com/Juri-Halveth/lernstudio",
+                      "visibility":  "PUBLIC"
+                  },
+                  {
+                      "defaultBranchRef":  {
+                                               "name":  "main"
+                                           },
+                      "isArchived":  false,
+                      "name":  "juri-janovski-these-zur-geburt",
+                      "nameWithOwner":  "Juri-Halveth/juri-janovski-these-zur-geburt",
+                      "url":  "https://github.com/Juri-Halveth/juri-janovski-these-zur-geburt",
+                      "visibility":  "PUBLIC"
+                  },
+                  {
+                      "defaultBranchRef":  {
+                                               "name":  "main"
+                                           },
+                      "isArchived":  false,
+                      "name":  "halveth-xai-40m-proposal",
+                      "nameWithOwner":  "Juri-Halveth/halveth-xai-40m-proposal",
+                      "url":  "https://github.com/Juri-Halveth/halveth-xai-40m-proposal",
+                      "visibility":  "PUBLIC"
+                  },
+                  {
+                      "defaultBranchRef":  {
+                                               "name":  "codex/knowledge-crafting-0.2"
+                                           },
+                      "isArchived":  false,
+                      "name":  "halveth-unreal",
+                      "nameWithOwner":  "Juri-Halveth/halveth-unreal",
+                      "url":  "https://github.com/Juri-Halveth/halveth-unreal",
+                      "visibility":  "PUBLIC"
+                  },
+                  {
+                      "defaultBranchRef":  {
+                                               "name":  "main"
+                                           },
+                      "isArchived":  false,
+                      "name":  "halveth-tresor",
+                      "nameWithOwner":  "Juri-Halveth/halveth-tresor",
+                      "url":  "https://github.com/Juri-Halveth/halveth-tresor",
+                      "visibility":  "PUBLIC"
+                  },
+                  {
+                      "defaultBranchRef":  {
+                                               "name":  "codex/scarlet-garden"
+                                           },
+                      "isArchived":  false,
+                      "name":  "halveth-realms",
+                      "nameWithOwner":  "Juri-Halveth/halveth-realms",
+                      "url":  "https://github.com/Juri-Halveth/halveth-realms",
+                      "visibility":  "PUBLIC"
+                  },
+                  {
+                      "defaultBranchRef":  {
+                                               "name":  "main"
+                                           },
+                      "isArchived":  false,
+                      "name":  "halveth-private-core",
+                      "nameWithOwner":  "Juri-Halveth/halveth-private-core",
+                      "url":  "https://github.com/Juri-Halveth/halveth-private-core",
+                      "visibility":  "PRIVATE"
+                  },
+                  {
+                      "defaultBranchRef":  {
+                                               "name":  "main"
+                                           },
+                      "isArchived":  false,
+                      "name":  "jbl-owner-external-witness-20260901",
+                      "nameWithOwner":  "Juri-Halveth/jbl-owner-external-witness-20260901",
+                      "url":  "https://github.com/Juri-Halveth/jbl-owner-external-witness-20260901",
+                      "visibility":  "PRIVATE"
+                  },
+                  {
+                      "defaultBranchRef":  {
+                                               "name":  "main"
+                                           },
+                      "isArchived":  false,
+                      "name":  "jbl-wan-proof",
+                      "nameWithOwner":  "Juri-Halveth/jbl-wan-proof",
+                      "url":  "https://github.com/Juri-Halveth/jbl-wan-proof",
+                      "visibility":  "PRIVATE"
+                  }
+              ],
+    "Count":  17
+}

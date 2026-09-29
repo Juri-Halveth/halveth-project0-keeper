@@ -1,0 +1,51 @@
+name: TRIAD Integrity
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+
+  triad:
+
+    runs-on: windows-latest
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+
+      - name: Validate TRIAD
+        shell: pwsh
+        run: ./scripts/Test-Triad.ps1
+
+
+      - name: Run three evolution cycles
+        shell: pwsh
+        run: |
+          ./scripts/Invoke-Triad.ps1 `
+            -Intent "CI integrity observation" `
+            -Cycles 3
+
+
+      - name: Show runtime state
+        shell: pwsh
+        run: |
+          Get-Content ./.triad-runtime/STATE.json
+
+
+      - name: Source tree must remain clean
+        shell: pwsh
+        run: |
+          $dirty = git status --porcelain
+
+          if ($dirty) {
+            Write-Host $dirty
+            throw "TRIAD modified tracked source during observation."
+          }
+
+          Write-Host "SOURCE TREE CLEAN"
