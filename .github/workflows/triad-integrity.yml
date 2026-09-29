@@ -8,7 +8,9 @@ permissions:
   contents: read
 
 jobs:
+
   triad:
+
     runs-on: windows-latest
 
     steps:
@@ -16,14 +18,34 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+
       - name: Validate TRIAD
         shell: pwsh
         run: ./scripts/Test-Triad.ps1
 
-      - name: Run one observation cycle
-        shell: pwsh
-        run: ./scripts/Invoke-Triad.ps1 -Intent "CI integrity observation" -Cycles 1
 
-      - name: Show final state
+      - name: Run three evolution cycles
         shell: pwsh
-        run: Get-Content ./constellation/STATE.json
+        run: |
+          ./scripts/Invoke-Triad.ps1 `
+            -Intent "CI integrity observation" `
+            -Cycles 3
+
+
+      - name: Show runtime state
+        shell: pwsh
+        run: |
+          Get-Content ./.triad-runtime/STATE.json
+
+
+      - name: Source tree must remain clean
+        shell: pwsh
+        run: |
+          $dirty = git status --porcelain
+
+          if ($dirty) {
+            Write-Host $dirty
+            throw "TRIAD modified tracked source during observation."
+          }
+
+          Write-Host "SOURCE TREE CLEAN"

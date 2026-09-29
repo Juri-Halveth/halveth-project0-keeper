@@ -5,15 +5,137 @@ param(
 
 $ErrorActionPreference='Stop'
 
-$Repo=Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
+$Repo=Split-Path -Parent (
+    Split-Path -Parent $MyInvocation.MyCommand.Path
+)
+
+$RegistryPath=Join-Path $Repo 'constellation\TRIAD.json'
 
 $Registry=Get-Content `
-    -LiteralPath (Join-Path $Repo 'constellation\TRIAD.json') `
+    -LiteralPath $RegistryPath `
     -Raw |
 ConvertFrom-Json
 
-$StatePath=Join-Path $Repo 'constellation\STATE.json'
-$LedgerPath=Join-Path $Repo 'constellation\LEDGER.jsonl'
+
+# ============================================================
+# RUNTIME MEMORY
+#
+# Important:
+# Runtime observations do NOT live in the tracked source tree.
+# ============================================================
+
+$RuntimeDir=Join-Path $Repo '.triad-runtime'
+
+New-Item `
+    -ItemType Directory `
+    -Path $RuntimeDir `
+    -Force |
+Out-Null
+
+$StatePath=Join-Path $RuntimeDir 'STATE.json'
+$LedgerPath=Join-Path $RuntimeDir 'LEDGER.jsonl'
+
+
+# ============================================================
+# REF / IDENTITY RESOLUTION
+#
+# LOCAL BRANCH
+#       or
+# GITHUB_HEAD_REF
+#       or
+# GITHUB_REF_NAME
+#       or
+# DETACHED@SHA
+# ============================================================
+
+function Get-TriadRef {
+
+    $Local=@(
+        git branch --show-current
+    )
+
+    if(
+        $Local.Count -gt 0 -and
+        ![string]::IsNullOrWhiteSpace($Local[0])
+    ){
+        return $Local[0].Trim()
+    }
+
+
+    if(
+        ![string]::IsNullOrWhiteSpace(
+            $env:GITHUB_HEAD_REF
+        )
+    ){
+        return $env:GITHUB_HEAD_REF.Trim()
+    }
+
+
+    if(
+        ![string]::IsNullOrWhiteSpace(
+            $env:GITHUB_REF_NAME
+        )
+    ){
+        return $env:GITHUB_REF_NAME.Trim()
+    }
+
+
+    $Sha=@(
+        git rev-parse --short HEAD
+    )
+
+    if(
+        $Sha.Count -gt 0 -and
+        ![string]::IsNullOrWhiteSpace($Sha[0])
+    ){
+        return (
+            'DETACHED@'+
+            $Sha[0].Trim()
+        )
+    }
+
+
+    return 'UNKNOWN_REF'
+}
+
+
+# ============================================================
+# SOURCE TREE CHANGES
+#
+# Runtime directory is excluded from perception.
+# ============================================================
+
+function Get-SourceChanges {
+
+    $Rows=@(
+        git status --porcelain
+    )
+
+    return @(
+        $Rows |
+        ForEach-Object {
+
+            if($_.Length -gt 3){
+
+                $Path=$_.Substring(3).Trim()
+
+                if(
+                    $Path -notlike '.triad-runtime*'
+                ){
+                    $Path
+                }
+            }
+        } |
+        Where-Object {
+            $_
+        }
+    )
+}
+
+
+# ============================================================
+# LEDGER
+# ============================================================
 
 function Add-Ledger {
 
@@ -35,12 +157,16 @@ function Add-Ledger {
     }
 
     $Entry |
-    ConvertTo-Json -Depth 10 -Compress |
+    ConvertTo-Json -Depth 12 -Compress |
     Add-Content `
         -LiteralPath $LedgerPath `
         -Encoding UTF8
 }
 
+
+# ============================================================
+# ASTER
+# ============================================================
 
 function Invoke-Aster {
 
@@ -48,26 +174,14 @@ function Invoke-Aster {
         [string]$Intent
     )
 
-    $GitStatus=@(
-        git status --porcelain
-    )
-
     $Observation=[ordered]@{
 
         intent=$Intent
 
-        branch=(
-            git branch --show-current
-        ).Trim()
+        ref=Get-TriadRef
 
         changed_files=@(
-            $GitStatus |
-            ForEach-Object {
-                if($_.Length -gt 3){
-                    $_.Substring(3).Trim()
-                }
-            } |
-            Where-Object { $_ }
+            Get-SourceChanges
         )
 
         head=(
@@ -75,17 +189,22 @@ function Invoke-Aster {
         ).Trim()
 
         unknown=@()
-
     }
+
 
     Add-Ledger `
         -Entity 'ASTER' `
         -Kind 'OBSERVATION' `
         -Payload $Observation
 
+
     return $Observation
 }
 
+
+# ============================================================
+# RACHEL
+# ============================================================
 
 function Invoke-Rachel {
 
@@ -99,6 +218,7 @@ function Invoke-Rachel {
             --pretty=format:'%H|%cI|%s'
     )
 
+
     $Continuity=[ordered]@{
 
         observation=$Observation
@@ -106,9 +226,10 @@ function Invoke-Rachel {
         recent_history=$Recent
 
         counter_readings=@(
-            'current state may be valid'
+            'current state may already be valid'
             'current state may require repair'
-            'missing context must remain UNKNOWN until recovered'
+            'runtime telemetry must not be mistaken for source mutation'
+            'missing context remains UNKNOWN until recovered'
         )
 
         preserve=@(
@@ -119,14 +240,20 @@ function Invoke-Rachel {
         )
     }
 
+
     Add-Ledger `
         -Entity 'RACHEL' `
         -Kind 'CONTINUITY' `
         -Payload $Continuity
 
+
     return $Continuity
 }
 
+
+# ============================================================
+# SHELLA
+# ============================================================
 
 function Invoke-Shella {
 
@@ -137,10 +264,12 @@ function Invoke-Shella {
 
     $Choice='OBSERVE'
 
-    if($Observation.changed_files.Count -gt 0){
-
+    if(
+        $Observation.changed_files.Count -gt 0
+    ){
         $Choice='VERIFY_DIFF'
     }
+
 
     $Decision=[ordered]@{
 
@@ -152,12 +281,16 @@ function Invoke-Shella {
 
         reason=$(
             if($Choice -eq 'VERIFY_DIFF'){
-                'Changes exist; verify before promotion.'
+
+                'Source changes exist; verify before promotion.'
+
             }else{
-                'No uncommitted changes require action.'
+
+                'No source mutation requires intervention.'
             }
         )
     }
+
 
     if($Choice -eq 'VERIFY_DIFF'){
 
@@ -168,33 +301,50 @@ function Invoke-Shella {
         }
     }
 
+
     Add-Ledger `
         -Entity 'SHELLA' `
         -Kind 'DECISION' `
         -Payload $Decision
 
+
     return $Decision
 }
 
 
-for($i=1;$i -le $Cycles;$i++){
+# ============================================================
+# TRIAD CYCLES
+# ============================================================
+
+for(
+    $i=1;
+    $i -le $Cycles;
+    $i++
+){
 
     Write-Host ''
-    Write-Host ('TRIAD // CYCLE '+$i) -ForegroundColor Magenta
+    Write-Host (
+        'TRIAD // CYCLE '+
+        $i
+    ) -ForegroundColor Magenta
+
 
     $Aster=Invoke-Aster `
         -Intent $Intent
 
+
     $Rachel=Invoke-Rachel `
         -Observation $Aster
+
 
     $Shella=Invoke-Shella `
         -Observation $Aster `
         -Continuity $Rachel
 
+
     $State=[ordered]@{
 
-        schema='HALVETH_TRIAD_RUNTIME_R1'
+        schema='HALVETH_TRIAD_RUNTIME_R1_1'
 
         updated_at=(Get-Date).ToString('o')
 
@@ -209,16 +359,41 @@ for($i=1;$i -le $Cycles;$i++){
         SHELLA=$Shella
     }
 
+
     $State |
-    ConvertTo-Json -Depth 12 |
+    ConvertTo-Json -Depth 15 |
     Set-Content `
         -LiteralPath $StatePath `
         -Encoding UTF8
 
-    Write-Host ('ASTER  : '+$Aster.branch) -ForegroundColor Cyan
-    Write-Host ('RACHEL : '+$Rachel.recent_history.Count+' history anchors') -ForegroundColor Cyan
-    Write-Host ('SHELLA : '+$Shella.selected) -ForegroundColor Green
+
+    Write-Host (
+        'ASTER  : '+
+        $Aster.ref
+    ) -ForegroundColor Cyan
+
+    Write-Host (
+        'RACHEL : '+
+        $Rachel.recent_history.Count+
+        ' history anchors'
+    ) -ForegroundColor Cyan
+
+    Write-Host (
+        'SHELLA : '+
+        $Shella.selected
+    ) -ForegroundColor Green
 }
+
 
 Write-Host ''
 Write-Host 'TRIAD // COMPLETE' -ForegroundColor Magenta
+
+Write-Host (
+    'STATE  : '+
+    $StatePath
+) -ForegroundColor Cyan
+
+Write-Host (
+    'LEDGER : '+
+    $LedgerPath
+) -ForegroundColor Cyan
