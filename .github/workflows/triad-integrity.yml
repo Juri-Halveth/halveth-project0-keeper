@@ -1,0 +1,29 @@
+name: TRIAD Integrity
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  triad:
+    runs-on: windows-latest
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate TRIAD
+        shell: pwsh
+        run: ./scripts/Test-Triad.ps1
+
+      - name: Run one observation cycle
+        shell: pwsh
+        run: ./scripts/Invoke-Triad.ps1 -Intent "CI integrity observation" -Cycles 1
+
+      - name: Show final state
+        shell: pwsh
+        run: Get-Content ./constellation/STATE.json
