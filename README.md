@@ -1,3 +1,7 @@
+<!-- HUB_LANGUAGES_V1 -->
+[Original / Deutsch](README.md) · [English](README.en.md) · [Русский](README.ru.md)
+<!-- /HUB_LANGUAGES_V1 -->
+
 # HALVETH Project0 Keeper
 
 ## Juri Janovski / Juri Halveth – HALVETH VERACHEL STUDIOS
