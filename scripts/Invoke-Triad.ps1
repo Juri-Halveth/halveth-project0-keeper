@@ -51,7 +51,7 @@ $LedgerPath=Join-Path $RuntimeDir 'LEDGER.jsonl'
 function Get-TriadRef {
 
     $Local=@(
-        git branch --show-current
+        git -C $Repo branch --show-current
     )
 
     if(
@@ -81,7 +81,7 @@ function Get-TriadRef {
 
 
     $Sha=@(
-        git rev-parse --short HEAD
+        git -C $Repo rev-parse --short HEAD
     )
 
     if(
@@ -108,7 +108,7 @@ function Get-TriadRef {
 function Get-SourceChanges {
 
     $Rows=@(
-        git status --porcelain
+        git -C $Repo status --porcelain
     )
 
     return @(
@@ -185,7 +185,7 @@ function Invoke-Aster {
         )
 
         head=(
-            git rev-parse HEAD
+            git -C $Repo rev-parse HEAD
         ).Trim()
 
         unknown=@()
@@ -213,7 +213,7 @@ function Invoke-Rachel {
     )
 
     $Recent=@(
-        git log `
+        git -C $Repo log `
             -5 `
             --pretty=format:'%H|%cI|%s'
     )
@@ -294,10 +294,16 @@ function Invoke-Shella {
 
     if($Choice -eq 'VERIFY_DIFF'){
 
-        git diff --check
+        git -C $Repo diff --check
 
         if($LASTEXITCODE -ne 0){
             throw 'SHELLA verification failed.'
+        }
+
+        git -C $Repo diff --cached --check
+
+        if($LASTEXITCODE -ne 0){
+            throw 'SHELLA staged verification failed.'
         }
     }
 
