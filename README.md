@@ -1,13 +1,12 @@
-<!-- HUB_LANGUAGES_V1 -->
-[Original / Deutsch](README.md) · [English](README.en.md) · [Русский](README.ru.md)
-<!-- /HUB_LANGUAGES_V1 -->
+# Project-0-Werkzeuge – Skripte und Dokumentation für Solana
 
-# HALVETH Project0 Keeper
+Dieses Repository enthält Skripte und Entwicklungsdokumentation rund um einen Project-0-Keeper. Die konkreten Fähigkeiten ergeben sich aus dem aktuellen Quellstand; ein laufender Handels- oder Ertragsdienst wird hier nicht zugesagt.
 
-## Juri Janovski / Juri Halveth – HALVETH VERACHEL STUDIOS
+[**Projekt öffnen →**](https://github.com/Juri-Halveth/halveth-project0-keeper/tree/main/scripts) · [Arbeitsproben](https://juri-halveth.github.io/koennen/) · [Portfolio](https://juri-halveth.github.io/)
 
-[Öffentliches Werkportfolio: alle elf privaten HALVETH-Werkzertifikate mit vollständigen Namen, Quellständen und SHA-256-Belegen](https://juri-halveth.github.io/werkzertifikate/).
+## Im Repository
 
-Dieses Repository war im dokumentierten Snapshot vom 28.09.2026 leer und erhält in Ausgabe 1.1 kein Werkzertifikat. Diese README ergänzt ausschließlich den Weg zum Portfolio.
+- `scripts/`: vorhandene Werkzeuge und Betriebshelfer.
+- `constellation/`: zugehörige Entwicklungsdokumentation.
 
-Die dortigen Zertifikate sind private, mit Codex erstellte Werkdokumentation. Sie verleihen keine ISTQB-Qualifikation oder sonstige Personenzertifizierung.
+Der Snapshot vom 28.09.2026 dokumentierte noch ein leeres Repository. Dieser historische Stand ist in Git erhalten; für die heutigen Dateien gilt der aktuelle Quellstand.
