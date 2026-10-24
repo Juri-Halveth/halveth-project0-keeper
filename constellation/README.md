@@ -56,3 +56,22 @@ Every cycle returns its result to the other two.
 This repository acts as the shared public control-plane.
 
 Repository metadata can be refreshed locally with GitHub CLI.
+
+## Local runtime boundary
+
+`scripts/Invoke-Triad.ps1` reads the Git repository that contains the engine,
+even when invoked from another directory. It leaves the caller's working
+directory unchanged. Native Git errors stop the run before a successful state
+receipt is written. Both staged and unstaged diffs are checked; generated
+`.triad-runtime/` files remain separate from source observations.
+
+Cycles are explicitly bounded to 1–100. This engine observes local Git metadata
+and selects a local verification step; it does not run a trading service,
+connect a wallet, or apply its declared action proposals automatically.
+
+Run the parser/registry check and the isolated runtime regression from PowerShell:
+
+```powershell
+./scripts/Test-Triad.ps1
+./scripts/Test-TriadRuntime.ps1
+```

@@ -1,0 +1,61 @@
+$ErrorActionPreference='Stop'
+$SourceRoot=Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
+$TestRoot=Join-Path ([System.IO.Path]::GetTempPath()) ('halveth-triad-test-'+[guid]::NewGuid().ToString('N'))
+$Fixture=Join-Path $TestRoot 'engine-repository'
+$Foreign=Join-Path $TestRoot 'caller-repository'
+$Shell=(Get-Process -Id $PID).Path
+
+function Assert-Runtime($Condition,[string]$Message){
+    if(!$Condition){throw $Message}
+}
+function Invoke-TestGit([string]$Directory,[string[]]$Arguments){
+    $Result=@(& git -C $Directory @Arguments 2>&1)
+    if($LASTEXITCODE -ne 0){throw ('Test fixture Git failed: '+($Arguments -join ' '))}
+    return $Result
+}
+
+try{
+    New-Item -ItemType Directory -Path (Join-Path $Fixture 'scripts'),(Join-Path $Fixture 'constellation'),$Foreign -Force | Out-Null
+    Copy-Item -LiteralPath (Join-Path $SourceRoot 'scripts/Invoke-Triad.ps1') -Destination (Join-Path $Fixture 'scripts/Invoke-Triad.ps1')
+    Copy-Item -LiteralPath (Join-Path $SourceRoot 'constellation/TRIAD.json') -Destination (Join-Path $Fixture 'constellation/TRIAD.json')
+    Set-Content -LiteralPath (Join-Path $Fixture '.gitignore') -Value '.triad-runtime/' -Encoding UTF8
+    Set-Content -LiteralPath (Join-Path $Foreign 'caller.txt') -Value 'Unrelated caller repository' -Encoding UTF8
+    foreach($Directory in @($Fixture,$Foreign)){
+        Invoke-TestGit $Directory @('init','-b','main') | Out-Null
+        Invoke-TestGit $Directory @('add','.') | Out-Null
+        Invoke-TestGit $Directory @('-c','user.name=Local Test','-c','user.email=fixture@example.invalid','commit','-m','Local synthetic fixture') | Out-Null
+    }
+    $ExpectedHead=(Invoke-TestGit $Fixture @('rev-parse','HEAD') | Out-String).Trim()
+    Set-Content -LiteralPath (Join-Path $Fixture '.triad-runtime-notes.txt') -Value 'Source with a similar prefix must remain visible.' -Encoding UTF8
+    $Engine=Join-Path $Fixture 'scripts/Invoke-Triad.ps1'
+    Push-Location $Foreign
+    try{
+        & $Shell -NoProfile -NonInteractive -File $Engine -Cycles 1 *> (Join-Path $TestRoot 'valid.log')
+        Assert-Runtime ($LASTEXITCODE -eq 0) 'The bound engine failed from a foreign working directory.'
+        Assert-Runtime ((Get-Location).Path -eq $Foreign) 'The engine changed its caller location.'
+    }finally{Pop-Location}
+    $StatePath=Join-Path $Fixture '.triad-runtime/STATE.json'
+    $State=Get-Content -LiteralPath $StatePath -Raw | ConvertFrom-Json
+    Assert-Runtime ($State.ASTER.head -eq $ExpectedHead) 'Runtime HEAD belongs to the caller instead of the engine.'
+    Assert-Runtime ($State.ASTER.changed_files -contains '.triad-runtime-notes.txt') 'A source file with a similar runtime prefix was hidden.'
+    Assert-Runtime (@($State.ASTER.changed_files | Where-Object {$_ -like '.triad-runtime/*'}).Count -eq 0) 'Generated runtime observations leaked into source changes.'
+    Assert-Runtime (@(Invoke-TestGit $Foreign @('status','--porcelain')).Count -eq 0) 'The unrelated caller repository was changed.'
+
+    $Before=(Get-FileHash -LiteralPath $StatePath -Algorithm SHA256).Hash
+    Set-Content -LiteralPath (Join-Path $Fixture 'staged.txt') -Value 'Trailing whitespace must fail verification.  ' -Encoding UTF8
+    Invoke-TestGit $Fixture @('add','staged.txt') | Out-Null
+    & $Shell -NoProfile -NonInteractive -File $Engine -Cycles 1 *> (Join-Path $TestRoot 'rejected.log')
+    Assert-Runtime ($LASTEXITCODE -ne 0) 'Staged whitespace errors were falsely accepted.'
+    Assert-Runtime ((Get-FileHash -LiteralPath $StatePath -Algorithm SHA256).Hash -eq $Before) 'A failed native Git check replaced the successful state receipt.'
+    Write-Host 'TRIAD RUNTIME BINDING : PASS'
+    Write-Host 'NATIVE GIT FAILURE   : PASS'
+    Write-Host 'CALLER PRESERVED     : PASS'
+}finally{
+    # The only recursively removed object is this test's fresh, literal temp root.
+    $ResolvedTestRoot=[System.IO.Path]::GetFullPath($TestRoot)
+    $ResolvedTemp=[System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath()).TrimEnd([char[]]'\/')
+    if(!$ResolvedTestRoot.StartsWith($ResolvedTemp+[System.IO.Path]::DirectorySeparatorChar,[System.StringComparison]::OrdinalIgnoreCase) -or !(Split-Path -Leaf $ResolvedTestRoot).StartsWith('halveth-triad-test-')){
+        throw 'Test cleanup target was outside the expected temporary root.'
+    }
+    if(Test-Path -LiteralPath $ResolvedTestRoot){Remove-Item -LiteralPath $ResolvedTestRoot -Recurse -Force}
+}
