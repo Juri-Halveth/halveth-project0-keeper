@@ -37,6 +37,7 @@ try{
         Invoke-TestGit $Directory @('-c','user.name=Local Test','-c','user.email=fixture@example.invalid','commit','-m','Local synthetic fixture') | Out-Null
     }
     $ExpectedHead=(Invoke-TestGit $Fixture @('rev-parse','HEAD') | Out-String).Trim()
+    $ForeignHead=(Invoke-TestGit $Foreign @('rev-parse','HEAD') | Out-String).Trim()
     Set-Content -LiteralPath (Join-Path $Fixture '.triad-runtime-notes.txt') -Value 'Source with a similar prefix must remain visible.' -Encoding UTF8
     $Engine=Join-Path $Fixture 'scripts/Invoke-Triad.ps1'
     Push-Location $Foreign
@@ -53,6 +54,47 @@ try{
     Assert-Runtime (@(Invoke-TestGit $Foreign @('status','--porcelain')).Count -eq 0) 'The unrelated caller repository was changed.'
 
     $Before=(Get-FileHash -LiteralPath $StatePath -Algorithm SHA256).Hash
+    $LedgerPath=Join-Path $Fixture '.triad-runtime/LEDGER.jsonl'
+    $BeforeLedger=(Get-FileHash -LiteralPath $LedgerPath -Algorithm SHA256).Hash
+    $Overrides=@{
+        GIT_DIR=(Join-Path $Foreign '.git')
+        GIT_WORK_TREE=$Fixture
+        GIT_INDEX_FILE=(Join-Path $Foreign '.git/index')
+        GIT_COMMON_DIR=(Join-Path $Foreign '.git')
+        GIT_OBJECT_DIRECTORY=(Join-Path $Foreign '.git/objects')
+        GIT_ALTERNATE_OBJECT_DIRECTORIES=(Join-Path $Foreign '.git/objects')
+        GIT_NAMESPACE='synthetic-other-namespace'
+    }
+    $SavedEnvironment=@{}
+    foreach($Name in $Overrides.Keys){
+        $SavedEnvironment[$Name]=@{
+            Present=(Test-Path -LiteralPath ('Env:'+$Name))
+            Value=[Environment]::GetEnvironmentVariable($Name,'Process')
+        }
+    }
+    $Cases=@(@{GIT_DIR=$Overrides.GIT_DIR;GIT_WORK_TREE=$Overrides.GIT_WORK_TREE})
+    foreach($Name in ($Overrides.Keys | Sort-Object)){$Cases+=@{$Name=$Overrides[$Name]}}
+    try{
+        foreach($Case in $Cases){
+            foreach($Name in $Overrides.Keys){Remove-Item -LiteralPath ('Env:'+$Name) -ErrorAction SilentlyContinue}
+            foreach($Name in $Case.Keys){[Environment]::SetEnvironmentVariable($Name,$Case[$Name],'Process')}
+            $OverrideLog=Join-Path $TestRoot 'override-rejected.log'
+            $EngineExit=Invoke-TestEngine $Engine $OverrideLog
+            $Observed=(Get-Content -LiteralPath $StatePath -Raw | ConvertFrom-Json).ASTER.head
+            Assert-Runtime ($EngineExit -ne 0) ('Repository overrides were accepted: own HEAD '+$ExpectedHead+', foreign HEAD '+$ForeignHead+', runtime HEAD '+$Observed)
+            $Rejection=Get-Content -LiteralPath $OverrideLog -Raw
+            Assert-Runtime ($Rejection -match 'Repository override environment variables') ('Override rejection was not explicit: '+$Rejection)
+            Assert-Runtime ((Get-FileHash -LiteralPath $StatePath -Algorithm SHA256).Hash -eq $Before) 'Rejected overrides changed the prior runtime receipt.'
+            Assert-Runtime ((Get-FileHash -LiteralPath $LedgerPath -Algorithm SHA256).Hash -eq $BeforeLedger) 'Rejected overrides changed the prior runtime ledger.'
+            foreach($Name in $Case.Keys){Assert-Runtime ([Environment]::GetEnvironmentVariable($Name,'Process') -eq $Case[$Name]) 'The caller override environment changed.'}
+        }
+    }finally{
+        foreach($Name in $Overrides.Keys){
+            if($SavedEnvironment[$Name].Present){
+                [Environment]::SetEnvironmentVariable($Name,$SavedEnvironment[$Name].Value,'Process')
+            }else{Remove-Item -LiteralPath ('Env:'+$Name) -ErrorAction SilentlyContinue}
+        }
+    }
     Set-Content -LiteralPath (Join-Path $Fixture 'staged.txt') -Value 'Trailing whitespace must fail verification.  ' -Encoding UTF8
     Invoke-TestGit $Fixture @('add','staged.txt') | Out-Null
     $EngineExit=Invoke-TestEngine $Engine (Join-Path $TestRoot 'rejected.log')
@@ -61,6 +103,7 @@ try{
     Write-Host 'TRIAD RUNTIME BINDING : PASS'
     Write-Host 'NATIVE GIT FAILURE   : PASS'
     Write-Host 'CALLER PRESERVED     : PASS'
+    Write-Host 'GIT OVERRIDES REJECTED: PASS'
 }finally{
     # The only recursively removed object is this test's fresh, literal temp root.
     $ResolvedTestRoot=[System.IO.Path]::GetFullPath($TestRoot)

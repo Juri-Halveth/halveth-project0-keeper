@@ -10,6 +10,25 @@ $Repo=Split-Path -Parent (
     Split-Path -Parent $MyInvocation.MyCommand.Path
 )
 
+# Git -C selects a working directory, but these variables can still redirect
+# repository identity, index or object lookup. Reject their presence explicitly;
+# leave the caller's environment unchanged and report names rather than values.
+$RepositoryOverrideNames=@(
+    'GIT_DIR',
+    'GIT_WORK_TREE',
+    'GIT_INDEX_FILE',
+    'GIT_COMMON_DIR',
+    'GIT_OBJECT_DIRECTORY',
+    'GIT_ALTERNATE_OBJECT_DIRECTORIES',
+    'GIT_NAMESPACE'
+)
+$ActiveOverrides=@($RepositoryOverrideNames | Where-Object {
+    Test-Path -LiteralPath ('Env:'+$_)
+})
+if($ActiveOverrides.Count -gt 0){
+    throw ('Repository override environment variables are set: '+($ActiveOverrides -join ', ')+'. Start the engine in a repository-default environment.')
+}
+
 # Every source observation belongs to the repository containing this script,
 # independently of the caller's current working directory. Native Git failures
 # must stop the run instead of turning an error string into a runtime receipt.

@@ -65,6 +65,14 @@ directory unchanged. Native Git errors stop the run before a successful state
 receipt is written. Both staged and unstaged diffs are checked; generated
 `.triad-runtime/` files remain separate from source observations.
 
+The engine rejects an environment containing `GIT_DIR`, `GIT_WORK_TREE`,
+`GIT_INDEX_FILE`, `GIT_COMMON_DIR`, `GIT_OBJECT_DIRECTORY`,
+`GIT_ALTERNATE_OBJECT_DIRECTORIES` or `GIT_NAMESPACE` before reading Git or
+writing runtime records. These overrides can select a different repository,
+index or object source even when the working directory matches. The diagnostic
+lists variable names only; the engine leaves the caller's environment intact.
+Normal Git configuration remains available.
+
 Cycles are explicitly bounded to 1–100. This engine observes local Git metadata
 and selects a local verification step; it does not run a trading service,
 connect a wallet, or apply its declared action proposals automatically.
