@@ -1,5 +1,6 @@
 param(
     [string]$Intent='improve the local HALVETH constellation',
+    [ValidateRange(1,100)]
     [int]$Cycles=3
 )
 
@@ -8,6 +9,45 @@ $ErrorActionPreference='Stop'
 $Repo=Split-Path -Parent (
     Split-Path -Parent $MyInvocation.MyCommand.Path
 )
+
+# Git -C selects a working directory, but these variables can still redirect
+# repository identity, index or object lookup. Reject their presence explicitly;
+# leave the caller's environment unchanged and report names rather than values.
+$RepositoryOverrideNames=@(
+    'GIT_DIR',
+    'GIT_WORK_TREE',
+    'GIT_INDEX_FILE',
+    'GIT_COMMON_DIR',
+    'GIT_OBJECT_DIRECTORY',
+    'GIT_ALTERNATE_OBJECT_DIRECTORIES',
+    'GIT_NAMESPACE'
+)
+$ActiveOverrides=@($RepositoryOverrideNames | Where-Object {
+    Test-Path -LiteralPath ('Env:'+$_)
+})
+if($ActiveOverrides.Count -gt 0){
+    throw ('Repository override environment variables are set: '+($ActiveOverrides -join ', ')+'. Start the engine in a repository-default environment.')
+}
+
+# Every source observation belongs to the repository containing this script,
+# independently of the caller's current working directory. Native Git failures
+# must stop the run instead of turning an error string into a runtime receipt.
+function Invoke-RepoGit {
+    param([string[]]$GitArguments)
+    $Output=@(& git -C $Repo @GitArguments 2>&1)
+    $GitExitCode=$LASTEXITCODE
+    if($GitExitCode -ne 0){
+        throw ('Repository observation failed (git '+($GitArguments -join ' ')+', exit '+$GitExitCode+').')
+    }
+    return $Output
+}
+
+$GitRoot=(Invoke-RepoGit -GitArguments @('rev-parse','--show-toplevel') | Out-String).Trim()
+$ExpectedRoot=[System.IO.Path]::GetFullPath($Repo).TrimEnd([char[]]'\/')
+$ActualRoot=[System.IO.Path]::GetFullPath($GitRoot).TrimEnd([char[]]'\/')
+if($ActualRoot -ne $ExpectedRoot){
+    throw 'The TRIAD engine must run from its own Git repository root.'
+}
 
 $RegistryPath=Join-Path $Repo 'constellation\TRIAD.json'
 
@@ -51,7 +91,7 @@ $LedgerPath=Join-Path $RuntimeDir 'LEDGER.jsonl'
 function Get-TriadRef {
 
     $Local=@(
-        git branch --show-current
+        Invoke-RepoGit -GitArguments @('branch','--show-current')
     )
 
     if(
@@ -81,7 +121,7 @@ function Get-TriadRef {
 
 
     $Sha=@(
-        git rev-parse --short HEAD
+        Invoke-RepoGit -GitArguments @('rev-parse','--short','HEAD')
     )
 
     if(
@@ -108,7 +148,7 @@ function Get-TriadRef {
 function Get-SourceChanges {
 
     $Rows=@(
-        git status --porcelain
+        Invoke-RepoGit -GitArguments @('status','--porcelain=v1','--untracked-files=all','--','.',':(exclude).triad-runtime/')
     )
 
     return @(
@@ -119,11 +159,7 @@ function Get-SourceChanges {
 
                 $Path=$_.Substring(3).Trim()
 
-                if(
-                    $Path -notlike '.triad-runtime*'
-                ){
-                    $Path
-                }
+                $Path
             }
         } |
         Where-Object {
@@ -185,7 +221,7 @@ function Invoke-Aster {
         )
 
         head=(
-            git rev-parse HEAD
+            Invoke-RepoGit -GitArguments @('rev-parse','HEAD')
         ).Trim()
 
         unknown=@()
@@ -213,9 +249,7 @@ function Invoke-Rachel {
     )
 
     $Recent=@(
-        git log `
-            -5 `
-            --pretty=format:'%H|%cI|%s'
+        Invoke-RepoGit -GitArguments @('log','-5','--pretty=format:%H|%cI|%s')
     )
 
 
@@ -294,11 +328,8 @@ function Invoke-Shella {
 
     if($Choice -eq 'VERIFY_DIFF'){
 
-        git diff --check
-
-        if($LASTEXITCODE -ne 0){
-            throw 'SHELLA verification failed.'
-        }
+        Invoke-RepoGit -GitArguments @('diff','--check') | Out-Null
+        Invoke-RepoGit -GitArguments @('diff','--cached','--check') | Out-Null
     }
 
 
