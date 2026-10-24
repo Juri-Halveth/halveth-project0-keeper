@@ -70,3 +70,8 @@ try{
     }
     if(Test-Path -LiteralPath $ResolvedTestRoot){Remove-Item -LiteralPath $ResolvedTestRoot -Recurse -Force}
 }
+
+# Actions' PowerShell wrapper forwards LASTEXITCODE after the script returns.
+# All assertions and cleanup succeeded; the intentionally rejected child is not
+# the outcome of this test process. Uncaught assertion/cleanup errors never reach here.
+exit 0
