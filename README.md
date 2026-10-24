@@ -1,12 +1,10 @@
-# Project-0-Werkzeuge – Skripte und Dokumentation für Solana
+[Deutsch](README.md) · [English](README.en.md) · [Русский](README.ru.md)
 
-Dieses Repository enthält Skripte und Entwicklungsdokumentation rund um einen Project-0-Keeper. Die konkreten Fähigkeiten ergeben sich aus dem aktuellen Quellstand; ein laufender Handels- oder Ertragsdienst wird hier nicht zugesagt.
+# TRIAD · lokale Projektsteuerung
 
-[**Projekt öffnen →**](https://github.com/Juri-Halveth/halveth-project0-keeper/tree/main/scripts) · [Arbeitsproben](https://juri-halveth.github.io/koennen/) · [Portfolio](https://juri-halveth.github.io/)
+PowerShell-Werkzeuge und Zustandsdateien für die experimentelle Steuerung von ASTER, RACHEL und SHELLA. Der aktuelle Quellstand dokumentiert Beobachtung, Kontinuität, Entscheidungen und Prüfungen; ein Handels- oder Ertragsdienst ist darin nicht enthalten.
 
-## Im Repository
+[**Projekt öffnen →**](scripts/) · [Konzept und Zustandsdateien](constellation/README.md) · [Portfolio](https://juri-halveth.github.io/)
 
-- `scripts/`: vorhandene Werkzeuge und Betriebshelfer.
-- `constellation/`: zugehörige Entwicklungsdokumentation.
-
-Der Snapshot vom 28.09.2026 dokumentierte noch ein leeres Repository. Dieser historische Stand ist in Git erhalten; für die heutigen Dateien gilt der aktuelle Quellstand.
+- [Werkzeuge](scripts/)
+- [Konzept und Zustandsdateien](constellation/)
