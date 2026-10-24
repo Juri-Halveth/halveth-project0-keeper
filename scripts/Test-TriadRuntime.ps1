@@ -13,6 +13,17 @@ function Invoke-TestGit([string]$Directory,[string[]]$Arguments){
     if($LASTEXITCODE -ne 0){throw ('Test fixture Git failed: '+($Arguments -join ' '))}
     return $Result
 }
+function Invoke-TestEngine([string]$Engine,[string]$Log){
+    $PreviousErrorActionPreference=$ErrorActionPreference
+    try{
+        # Windows PowerShell 5.1 converts expected child stderr into an ErrorRecord.
+        # Preserve it in the test log and inspect the exit code; the engine itself
+        # still fails closed under its own Stop preference.
+        $ErrorActionPreference='Continue'
+        & $Shell -NoProfile -NonInteractive -File $Engine -Cycles 1 *> $Log
+        return $LASTEXITCODE
+    }finally{$ErrorActionPreference=$PreviousErrorActionPreference}
+}
 
 try{
     New-Item -ItemType Directory -Path (Join-Path $Fixture 'scripts'),(Join-Path $Fixture 'constellation'),$Foreign -Force | Out-Null
@@ -30,8 +41,8 @@ try{
     $Engine=Join-Path $Fixture 'scripts/Invoke-Triad.ps1'
     Push-Location $Foreign
     try{
-        & $Shell -NoProfile -NonInteractive -File $Engine -Cycles 1 *> (Join-Path $TestRoot 'valid.log')
-        Assert-Runtime ($LASTEXITCODE -eq 0) 'The bound engine failed from a foreign working directory.'
+        $EngineExit=Invoke-TestEngine $Engine (Join-Path $TestRoot 'valid.log')
+        Assert-Runtime ($EngineExit -eq 0) 'The bound engine failed from a foreign working directory.'
         Assert-Runtime ((Get-Location).Path -eq $Foreign) 'The engine changed its caller location.'
     }finally{Pop-Location}
     $StatePath=Join-Path $Fixture '.triad-runtime/STATE.json'
@@ -44,8 +55,8 @@ try{
     $Before=(Get-FileHash -LiteralPath $StatePath -Algorithm SHA256).Hash
     Set-Content -LiteralPath (Join-Path $Fixture 'staged.txt') -Value 'Trailing whitespace must fail verification.  ' -Encoding UTF8
     Invoke-TestGit $Fixture @('add','staged.txt') | Out-Null
-    & $Shell -NoProfile -NonInteractive -File $Engine -Cycles 1 *> (Join-Path $TestRoot 'rejected.log')
-    Assert-Runtime ($LASTEXITCODE -ne 0) 'Staged whitespace errors were falsely accepted.'
+    $EngineExit=Invoke-TestEngine $Engine (Join-Path $TestRoot 'rejected.log')
+    Assert-Runtime ($EngineExit -ne 0) 'Staged whitespace errors were falsely accepted.'
     Assert-Runtime ((Get-FileHash -LiteralPath $StatePath -Algorithm SHA256).Hash -eq $Before) 'A failed native Git check replaced the successful state receipt.'
     Write-Host 'TRIAD RUNTIME BINDING : PASS'
     Write-Host 'NATIVE GIT FAILURE   : PASS'
