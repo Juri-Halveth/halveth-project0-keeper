@@ -4,7 +4,7 @@
 
 Инструменты PowerShell и файлы состояния для экспериментального управления ASTER, RACHEL и SHELLA. Исходники описывают наблюдение, непрерывность, решения и проверки; торгового сервиса или сервиса доходности здесь нет.
 
-[**Открыть проект →**](scripts/) · [Концепция и файлы состояния](constellation/README.md) · [Portfolio](https://juri-halveth.github.io/)
+[**Открыть проект →**](scripts/) · [Концепция и файлы состояния](constellation/README.md) · [Портфолио](https://juri-halveth.github.io/ru/)
 
 - [Инструменты](scripts/)
 - [Концепция и файлы состояния](constellation/)
