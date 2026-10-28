@@ -57,6 +57,13 @@ This repository acts as the shared public control-plane.
 
 Repository metadata can be refreshed locally with GitHub CLI.
 
+`REPOSITORIES.json` is the **current public-only** catalog. Refresh and check it
+with `python scripts/update_public_repositories.py` and
+`python scripts/update_public_repositories.py --check` from the repository root.
+The script reads current GitHub visibility and omits private repositories. The
+`capturedAt` timestamp describes this snapshot; it does not revise historical
+commits or prove that a repository will stay public.
+
 ## Local runtime boundary
 
 `scripts/Invoke-Triad.ps1` reads the Git repository that contains the engine,
