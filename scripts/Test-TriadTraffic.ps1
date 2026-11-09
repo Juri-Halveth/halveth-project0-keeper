@@ -43,6 +43,69 @@ try {
         Assert-Traffic (-not $outText.Contains($secret)) ('unredacted field: '+$secret)
     }
     Assert-Traffic ((Get-FileHash $CsvPath -Algorithm SHA256).Hash -eq $inputSha) 'original CSV was modified'
+    # Verify that one running importer notices a NEW sensor file by filename,
+    # processes it once, and resets per-file gaps without spilling secrets.
+    $WatchDir=Join-Path $Temp 'rotating-sources'
+    $AutoOutput=Join-Path $Temp 'auto-output'
+    New-Item -ItemType Directory -Path $WatchDir,$AutoOutput -Force | Out-Null
+    $FirstFile=Join-Path $WatchDir 'LIVE_V2_20261109_220000_EVENTS.csv'
+    $SecondFile=Join-Path $WatchDir 'LIVE_V2_20261109_220100_EVENTS.csv'
+    $rows[0..1] | Export-Csv -LiteralPath $FirstFile -NoTypeInformation -Encoding UTF8
+    $FirstSha=(Get-FileHash -LiteralPath $FirstFile -Algorithm SHA256).Hash
+    $AutoJob=Start-Job -ScriptBlock {
+        param($ScriptPath,$InputDir,$OutputDir,$Domain)
+        & $ScriptPath -AutoSwitch -Follow -InputDirectory $InputDir `
+            -AllowedHost $Domain -OutputDirectory $OutputDir `
+            -PollMilliseconds 250 -MaxEvents 5
+    } -ArgumentList $Tool,$WatchDir,$AutoOutput,$base
+    try {
+        $Ready=$false
+        for($attempt=0;$attempt -lt 80;$attempt++){
+            Start-Sleep -Milliseconds 250
+            $FirstSummary=Get-ChildItem -LiteralPath $AutoOutput `
+                -Filter '*SUMMARY.json' -File | Select-Object -First 1
+            if($null -ne $FirstSummary){
+                try {
+                    $check=Get-Content -LiteralPath $FirstSummary.FullName -Raw | ConvertFrom-Json
+                    if($check.Events -eq 2 -and $check.SourceFile -eq [IO.Path]::GetFileName($FirstFile)){
+                        $Ready=$true
+                        break
+                    }
+                }catch{ # May catch an in-progress JSON file write; retry until complete.
+                }
+            }
+            if($AutoJob.State -in @('Failed','Stopped','Completed')){break}
+        }
+        Assert-Traffic $Ready 'AutoSwitch did not ingest first sensor file'
+        $rows[2..4] | Export-Csv -LiteralPath $SecondFile -NoTypeInformation -Encoding UTF8
+        $SecondSha=(Get-FileHash -LiteralPath $SecondFile -Algorithm SHA256).Hash
+        $done=Wait-Job -Job $AutoJob -Timeout 20
+        Assert-Traffic ($null -ne $done) 'AutoSwitch did not detect second sensor file'
+        Receive-Job -Job $AutoJob -ErrorAction Stop | Out-Host
+        Assert-Traffic ($AutoJob.State -eq 'Completed') 'AutoSwitch job failed'
+        $AutoSummary=Get-Content -LiteralPath $FirstSummary.FullName -Raw | ConvertFrom-Json
+        Assert-Traffic ($AutoSummary.Events -eq 5) 'AutoSwitch lost or duplicated events'
+        Assert-Traffic ($AutoSummary.SourceGeneration -eq 2) 'AutoSwitch did not increment source generation'
+        Assert-Traffic ($AutoSummary.SourceFile -eq [IO.Path]::GetFileName($SecondFile)) 'AutoSwitch current source incorrect'
+        Assert-Traffic ($AutoSummary.LastAuthMarker -eq 'email-populated-marker') 'AutoSwitch did not process new auth marker'
+        Assert-Traffic ($AutoSummary.SourceHistory.Count -eq 2) 'AutoSwitch did not retain filename history'
+        $AutoEvents=Get-ChildItem -LiteralPath $AutoOutput -Filter '*EVENTS.jsonl' -File | Select-Object -First 1
+        $Joined=@(Get-Content -LiteralPath $AutoEvents.FullName | ForEach-Object {$_ | ConvertFrom-Json})
+        Assert-Traffic ($Joined.Count -eq 5) 'AutoSwitch JSONL event count mismatch'
+        Assert-Traffic ($null -eq $Joined[2].GapMs) 'New source inherited inter-event time from old file'
+        $AutoText=(Get-Content -LiteralPath $FirstSummary.FullName -Raw)+(Get-Content -LiteralPath $AutoEvents.FullName -Raw)
+        foreach($secret in @('SECRET_COOKIE_VALUE','LEAKME','SESSIONVALUE_SHOULD_NEVER_APPEAR','PRIVATE_EMAIL_SHOULD_NEVER_APPEAR','SECRETUSER','SESS_ID','iggm_token')){
+            Assert-Traffic (-not $AutoText.Contains($secret)) ('AutoSwitch unredacted field: '+$secret)
+        }
+        Assert-Traffic ((Get-FileHash -LiteralPath $FirstFile -Algorithm SHA256).Hash -eq $FirstSha) 'AutoSwitch modified first CSV'
+        Assert-Traffic ((Get-FileHash -LiteralPath $SecondFile -Algorithm SHA256).Hash -eq $SecondSha) 'AutoSwitch modified second CSV'
+        Write-Host 'AUTO SOURCE SWITCH    : PASS' -ForegroundColor Green
+    }finally{
+        if($null -ne $AutoJob){
+            if($AutoJob.State -eq 'Running'){Stop-Job -Job $AutoJob -ErrorAction SilentlyContinue}
+            Remove-Job -Job $AutoJob -Force -ErrorAction SilentlyContinue
+        }
+    }
     Write-Host 'TRIAD TRAFFIC PARSER : PASS' -ForegroundColor Green
     Write-Host 'RELATIVE TIMING      : PASS' -ForegroundColor Green
     Write-Host 'AUTH/TTP SIGNALS     : PASS' -ForegroundColor Green
