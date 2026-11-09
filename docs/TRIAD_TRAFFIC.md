@@ -41,6 +41,22 @@ if (-not $log) { throw 'No V2 CSV found.' }
 
 For a recording that is currently being appended to, use the same command with `-Follow -PollMilliseconds 1000`. Stop with `Ctrl+C`. The recorder must already be running: the importer does not start a new browser or connect to the website. An incomplete CSV while appending is retried. For large 24/7 recordings, rotate recording files by session; this first version rescans the CSV during follow and is not yet optimized for unbounded volume.
 
+## Automatic CSV session switching (experimental)
+
+A fixed `-CsvPath -Follow` does not follow new files after a browser monitor restart. Instead, keep the importer running in directory mode:
+
+```powershell
+./scripts/Import-TriadTraffic.ps1 \
+  -AllowedHost 'www.iggm.com' \
+  -AutoSwitch -Follow \
+  -InputDirectory "$HOME\\HALVETH_IGGM_LIVE" \
+  -PollMilliseconds 1000
+```
+
+This mode reads **only local filenames** matching `LIVE_V2_YYYYMMDD_HHMMSS_EVENTS.csv`. It follows the lexicographically latest timestamped file and automatically switches when a newer filename appears. Each switch increments `SourceGeneration`, appends its filename to `SourceHistory`, resets the per-file `ElapsedMs`/`GapMs` clock and resets the HTML auth marker to `unknown`; the aggregate event count keeps increasing. The source browser monitor still needs to be running independently. A summary timestamp moving while `Events` stays fixed only shows that TRIAD is polling.
+
+`-MaxEvents 5` is an optional finite-stop mode for synthetic tests. Omit it for continuous monitoring. This initial version still re-imports the active CSV while tailing, so extremely large or prolonged logs need a more efficient offset reader and rotation/retention policy.
+
 ## What it computes
 
 | Field | Meaning | Limit |
@@ -66,8 +82,8 @@ Inter-event gaps may legitimately be **0 ms** when timestamps coincide. The run 
 
 ## Source and validation
 
-- `scripts/Import-TriadTraffic.ps1`: importer and optional follow mode.
-- `scripts/Test-TriadTraffic.ps1`: deterministic test fixture verifying event count, timestamp differences, auth-marker labeling, TTP tags, input immutability and protection against secret exposure.
+- `scripts/Import-TriadTraffic.ps1`: importer, fixed-file follow, and automatic source-switch follow mode.
+- `scripts/Test-TriadTraffic.ps1`: deterministic test fixture verifying event count, timestamp differences, auth-marker labeling, TTP tags, file rotation/switching, input immutability and protection against secret exposure.
 - `.github/workflows/triad-traffic.yml`: Windows PowerShell test on commits and pull requests.
 
 Successful CI validates the synthetic input/output behavior, not any claim about the target website's security.
