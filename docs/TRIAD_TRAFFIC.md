@@ -46,11 +46,7 @@ For a recording that is currently being appended to, use the same command with `
 A fixed `-CsvPath -Follow` does not follow new files after a browser monitor restart. Instead, keep the importer running in directory mode:
 
 ```powershell
-./scripts/Import-TriadTraffic.ps1 \
-  -AllowedHost 'www.iggm.com' \
-  -AutoSwitch -Follow \
-  -InputDirectory "$HOME\\HALVETH_IGGM_LIVE" \
-  -PollMilliseconds 1000
+./scripts/Import-TriadTraffic.ps1 -AllowedHost 'www.iggm.com' -AutoSwitch -Follow -InputDirectory "$HOME\HALVETH_IGGM_LIVE" -PollMilliseconds 1000
 ```
 
 This mode reads **only local filenames** matching `LIVE_V2_YYYYMMDD_HHMMSS_EVENTS.csv`. It follows the lexicographically latest timestamped file and automatically switches when a newer filename appears. Each switch increments `SourceGeneration`, appends its filename to `SourceHistory`, resets the per-file `ElapsedMs`/`GapMs` clock and resets the HTML auth marker to `unknown`; the aggregate event count keeps increasing. The source browser monitor still needs to be running independently. A summary timestamp moving while `Events` stays fixed only shows that TRIAD is polling.
