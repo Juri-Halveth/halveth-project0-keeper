@@ -52,11 +52,11 @@ $script:ClockInvalid=0
 $script:Rewinds=0
 
 function Convert-SafeRoute {
-    param([string]$Route,[string]$Host)
+    param([string]$Route,[string]$ExpectedHost)
     if([string]::IsNullOrWhiteSpace($Route)){ return '[unknown]' }
     if($Route -notmatch '^[A-Za-z0-9.-]+/'){ return '[invalid-route]' }
     try { $u=[Uri]('https://'+$Route) } catch { return '[invalid-route]' }
-    if($u.Scheme -ne 'https' -or $u.Host -ine $Host -or $u.UserInfo){ return '[other-host]' }
+    if($u.Scheme -ne 'https' -or $u.Host -ine $ExpectedHost -or $u.UserInfo){ return '[other-host]' }
     $parts=New-Object System.Collections.Generic.List[string]
     foreach($part in @($u.AbsolutePath.Split('/'))){
         if([string]::IsNullOrWhiteSpace($part)){continue}
@@ -69,7 +69,7 @@ function Convert-SafeRoute {
             $parts.Add('[segment]')
         }else{$parts.Add($part)}
     }
-    return ($Host.ToLowerInvariant()+'/'+($parts -join '/'))
+    return ($ExpectedHost.ToLowerInvariant()+'/'+($parts -join '/'))
 }
 function Get-TtpTags {
     param($Row)
@@ -156,7 +156,7 @@ function Add-TrafficEvent {
         ElapsedMs=$elapsedMs
         RequestLatencyMs=$null
         Kind=$kind
-        Route=(Convert-SafeRoute -Route ([string]$Row.Route) -Host $AllowedHost)
+        Route=(Convert-SafeRoute -Route ([string]$Row.Route) -ExpectedHost $AllowedHost)
         Method=$method
         HTTP=$http
         AuthMarker=$login
