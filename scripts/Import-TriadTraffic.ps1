@@ -5,23 +5,42 @@
   Reads an existing CSV; does not connect to a browser, server, or network.
   Produces a redacted event timeline and summary inside .triad-runtime/traffic.
   -Follow refreshes the snapshot periodically until Ctrl+C.
+  -AutoSwitch -Follow watches newer LIVE_V2_YYYYMMDD_HHMMSS_EVENTS.csv files
+  in a LOCAL directory and resets per-file timing on source changes.
   GapMs is the gap between logger events, NOT HTTP request latency.
 #>
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true)][string]$CsvPath,
+    [string]$CsvPath,
     [Parameter(Mandatory=$true)][ValidatePattern('^[A-Za-z0-9.-]+$')][string]$AllowedHost,
     [switch]$Follow,
     [ValidateRange(250,60000)][int]$PollMilliseconds=1000,
-    [string]$OutputDirectory
+    [string]$OutputDirectory,
+    [switch]$AutoSwitch,
+    [string]$InputDirectory,
+    [ValidateRange(0,10000000)][int]$MaxEvents=0
 )
 $ErrorActionPreference='Stop'
 $Repo=Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 if([string]::IsNullOrWhiteSpace($OutputDirectory)){
     $OutputDirectory=Join-Path $Repo '.triad-runtime/traffic'
 }
-if(-not (Test-Path -LiteralPath $CsvPath -PathType Leaf)){
-    throw "Input CSV not found: $CsvPath"
+if($AutoSwitch){
+    if(-not $Follow){throw '-AutoSwitch needs -Follow.'}
+    if(-not [string]::IsNullOrWhiteSpace($CsvPath)){
+        throw 'Choose either -AutoSwitch with -InputDirectory or a single -CsvPath.'
+    }
+    if([string]::IsNullOrWhiteSpace($InputDirectory)){
+        $InputDirectory=Join-Path $HOME 'HALVETH_IGGM_LIVE'
+    }
+    if(-not (Test-Path -LiteralPath $InputDirectory -PathType Container)){
+        throw "Local input directory not found: $InputDirectory"
+    }
+}else{
+    if([string]::IsNullOrWhiteSpace($CsvPath) -or
+       -not (Test-Path -LiteralPath $CsvPath -PathType Leaf)){
+        throw "Input CSV not found: $CsvPath"
+    }
 }
 New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
 
@@ -33,7 +52,10 @@ $script:State=[ordered]@{
     Schema='HALVETH_TRIAD_TRAFFIC_R1'
     RunId=$RunId
     AllowedHost=$AllowedHost.ToLowerInvariant()
-    SourceFile=[IO.Path]::GetFileName($CsvPath)
+    SourceFile=$(if($AutoSwitch){'waiting'}else{[IO.Path]::GetFileName($CsvPath)})
+    SourceGeneration=$(if($AutoSwitch){0}else{1})
+    SourceHistory=@()
+    AutoSwitch=[bool]$AutoSwitch
     RecordedAtUtc=[DateTimeOffset]::UtcNow.ToString('o')
     Events=0
     FirstEventUtc=$null
@@ -46,6 +68,7 @@ $script:State=[ordered]@{
     Redaction='No original Cookie, Set-Cookie, Note, Origin, query string or response body stored'
 }
 $script:Seen=0
+$script:CurrentCsvPath=$CsvPath
 $script:FirstTime=$null
 $script:LastTime=$null
 $script:ClockInvalid=0
@@ -171,14 +194,48 @@ function Add-TrafficEvent {
     }
 }
 
+function Get-LatestLiveFile {
+    # Filename includes UTC timestamp; sorting by name avoids an old file
+    # becoming the newest source merely because it was appended later.
+    $files=@(Get-ChildItem -LiteralPath $InputDirectory -Filter 'LIVE_V2_*_EVENTS.csv' -File |
+        Where-Object { $_.Name -match '^LIVE_V2_[0-9]{8}_[0-9]{6}_EVENTS\.csv$' } |
+        Sort-Object Name -Descending)
+    if($files.Count -eq 0){return $null}
+    return $files[0]
+}
+
 Write-Host ('TRIAD TRAFFIC | local/offline | '+$RunId) -ForegroundColor Cyan
-Write-Host ('Input: '+[IO.Path]::GetFileName($CsvPath))
+if($AutoSwitch){
+    Write-Host ('AutoSwitch watches local folder: '+$InputDirectory)
+}else{
+    Write-Host ('Input: '+[IO.Path]::GetFileName($CsvPath))
+}
 Write-Host ('Event log: '+$EventPath)
 Write-Host 'No HTTP requests. No cookie values. Event gaps are NOT request latency.'
 try {
     do {
+        if($AutoSwitch){
+            $fresh=Get-LatestLiveFile
+            if($null -eq $fresh){
+                Start-Sleep -Milliseconds $PollMilliseconds
+                continue
+            }
+            if($script:CurrentCsvPath -ne $fresh.FullName){
+                $script:CurrentCsvPath=$fresh.FullName
+                $script:State.SourceFile=$fresh.Name
+                $script:State.SourceGeneration=[int]$script:State.SourceGeneration+1
+                $script:State.SourceHistory+=@($fresh.Name)
+                $script:State.FirstEventUtc=$null
+                $script:State.LastEventUtc=$null
+                $script:State.LastAuthMarker='unknown'
+                $script:Seen=0
+                $script:FirstTime=$null
+                $script:LastTime=$null
+                Write-Host ('SOURCE_SWITCH -> '+$fresh.Name) -ForegroundColor Cyan
+            }
+        }
         try {
-            $rows=@(Import-Csv -LiteralPath $CsvPath -ErrorAction Stop)
+            $rows=@(Import-Csv -LiteralPath $script:CurrentCsvPath -ErrorAction Stop)
             $cols=@()
             if($rows.Count -gt 0){$cols=@($rows[0].PSObject.Properties.Name)}
             foreach($need in @('Seq','UTC','Kind','Route')){
@@ -198,6 +255,7 @@ try {
         }
         $script:Seen=$rows.Count
         Write-TrafficSummary
+        if($MaxEvents -gt 0 -and $script:State.Events -ge $MaxEvents){break}
         if($Follow){Start-Sleep -Milliseconds $PollMilliseconds}
     } while($Follow)
 } finally {
