@@ -26,19 +26,19 @@ try {
     $rows | Export-Csv -LiteralPath $CsvPath -NoTypeInformation -Encoding UTF8
     $inputSha=(Get-FileHash $CsvPath -Algorithm SHA256).Hash
     & $Tool -CsvPath $CsvPath -AllowedHost $base -OutputDirectory $OutputDir
-    $Summary=Get-ChildItem $OutputDir -Filter '*SUMMARY.json' | Select-Object -First 1
+    $SummaryFile=Get-ChildItem $OutputDir -Filter '*SUMMARY.json' | Select-Object -First 1
     $Events=Get-ChildItem $OutputDir -Filter '*EVENTS.jsonl' | Select-Object -First 1
-    Assert-Traffic ($null -ne $Summary -and $null -ne $Events) 'output missing'
-    $summary=Get-Content -LiteralPath $Summary.FullName -Raw | ConvertFrom-Json
+    Assert-Traffic ($null -ne $SummaryFile -and $null -ne $Events) 'output missing'
+    $SummaryData=Get-Content -LiteralPath $SummaryFile.FullName -Raw | ConvertFrom-Json
     $eventData=@(Get-Content -LiteralPath $Events.FullName | ForEach-Object {$_ | ConvertFrom-Json})
-    Assert-Traffic ($summary.Events -eq 5 -and $eventData.Count -eq 5) 'event counts'
+    Assert-Traffic ($SummaryData.Events -eq 5 -and $eventData.Count -eq 5) 'event counts'
     Assert-Traffic ($eventData[1].GapMs -eq 75) '75ms inter-event gap not preserved'
     Assert-Traffic ($eventData[4].ElapsedMs -eq 515) 'elapsed millisecond clock inaccurate'
-    Assert-Traffic ($summary.LastAuthMarker -eq 'email-populated-marker') 'auth marker not recorded'
+    Assert-Traffic ($SummaryData.LastAuthMarker -eq 'email-populated-marker') 'auth marker not recorded'
     Assert-Traffic ($eventData[3].TTPs -contains 'TTP-009') 'CORS signal tag missing'
     Assert-Traffic ($null -eq $eventData[3].RequestLatencyMs) 'request latency must remain unknown'
     Assert-Traffic ($eventData[4].Route -match '\[segment\]') 'unknown path segment was not sanitized'
-    $outText=(Get-Content -LiteralPath $Events.FullName -Raw)+(Get-Content -LiteralPath $Summary.FullName -Raw)
+    $outText=(Get-Content -LiteralPath $Events.FullName -Raw)+(Get-Content -LiteralPath $SummaryFile.FullName -Raw)
     foreach($secret in @('SECRET_COOKIE_VALUE','LEAKME','SESSIONVALUE_SHOULD_NEVER_APPEAR','PRIVATE_EMAIL_SHOULD_NEVER_APPEAR','SECRETUSER','SESS_ID','iggm_token')){
         Assert-Traffic (-not $outText.Contains($secret)) ('unredacted field: '+$secret)
     }
