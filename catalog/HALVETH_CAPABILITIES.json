@@ -1,0 +1,111 @@
+{
+  "schema": "HALVETH_CAPABILITY_ATLAS_V1",
+  "capturedAt": "2026-11-09",
+  "purpose": "Curated, public-source capability map. No runtime ingestion and no permission to test third-party systems.",
+  "ownerIdea": "Juri Janovski / HALVETH: combine existing projects as attributed capabilities, protect source history, use controlled synthetic accounts.",
+  "authoring": "Implementation and curation assisted by ChatGPT; source rights and claims stay with their own repositories.",
+  "securityPolicy": {
+    "noSecretCapture": true,
+    "noThirdPartyReplay": true,
+    "localLabOnly": true,
+    "publicRegistryExcludesPrivateRepositories": true
+  },
+  "capabilities": [
+    {
+      "id": "KEEPER-TRIAD",
+      "repo": "Juri-Halveth/halveth-project0-keeper",
+      "ref": "main",
+      "commit": "e927394b0d465fd8034ce6b7ecc1ab13875e1fba",
+      "path": "constellation/README.md",
+      "role": "local Git observation, provenance and reviewed decisions",
+      "mode": "LOCAL",
+      "license": "REVIEW_REQUIRED_NO_ROOT_LICENSE",
+      "status": "SOURCE_READ",
+      "next": "Review TRIAD Traffic integration as a separate draft PR; do not claim main contains it."
+    },
+    {
+      "id": "SECURITY-WORKBENCH",
+      "repo": "Juri-Halveth/halveth-forschungslabor",
+      "ref": "main",
+      "commit": "8e6b49c78c5ed8fbdf5d5010e11b4040b9013fff",
+      "path": "branches/security-workbench/README.md",
+      "role": "synthetic Alice/Bob authorization boundary and localhost-only Burp lab",
+      "mode": "LOCAL_SYNTHETIC",
+      "license": "MIT_CODE_CC_BY_DOCS",
+      "status": "SOURCE_READ",
+      "next": "Use local selftest; never point lab diagnostics at third-party services."
+    },
+    {
+      "id": "SECURITY-RESEARCH-HUB",
+      "repo": "Juri-Halveth/halveth-forschungslabor",
+      "ref": "main",
+      "commit": "8e6b49c78c5ed8fbdf5d5010e11b4040b9013fff",
+      "path": "branches/security-research-hub/README.md",
+      "role": "18 methods and 13 tool profiles, evidence plan and negative controls",
+      "mode": "READ_ONLY",
+      "license": "MIT_CODE_CC0_DATA_CC_BY_DOCS",
+      "status": "SOURCE_READ",
+      "next": "Promote only supported observations to hypotheses; export locally."
+    },
+    {
+      "id": "ASTER-SOURCE-LENS",
+      "repo": "Juri-Halveth/halveth-forschungslabor",
+      "ref": "main",
+      "commit": "8e6b49c78c5ed8fbdf5d5010e11b4040b9013fff",
+      "path": "branches/aster-source-lens/README.md",
+      "role": "source versus presentation versus historical and current state",
+      "mode": "LOCAL_SYNTHETIC",
+      "license": "MIT_CODE_CC_BY_DOCS",
+      "status": "SOURCE_READ",
+      "next": "Use as a bounded comparison contract, not as a network observer."
+    },
+    {
+      "id": "FEGEFEUER",
+      "repo": "Juri-Halveth/halveth-forschungslabor",
+      "ref": "main",
+      "commit": "8e6b49c78c5ed8fbdf5d5010e11b4040b9013fff",
+      "path": "branches/fegefeuer-provenance-transducer/README.md",
+      "role": "event identity, candidate retention and documented state transitions",
+      "mode": "LOCAL_SYNTHETIC",
+      "license": "MIT_CODE_CC_BY_DOCS",
+      "status": "SOURCE_READ",
+      "next": "Candidate event lineage model; no existing live integration asserted."
+    },
+    {
+      "id": "NOVA",
+      "repo": "Juri-Halveth/lucinet-seedspace",
+      "ref": "main",
+      "commit": "6151152eafa90c18dc64563872879dfc9da341f7",
+      "path": "nova/WORKBENCH.md",
+      "role": "local source memory, provenance, counterexamples and resumable work",
+      "mode": "LOCAL",
+      "license": "HALVETH_PIRL_2_SOURCE_AVAILABLE",
+      "status": "SOURCE_READ",
+      "next": "Connect by source references/export contracts only; do not copy or relicense protected code."
+    },
+    {
+      "id": "TRON-PROTOCOL-LAB",
+      "repo": "Juri-Halveth/halveth-tron-security-lab",
+      "ref": "develop",
+      "commit": "a4116f6dfe1505651d3c135007342c9bbb857c56",
+      "path": "README.md",
+      "role": "java-tron upstream fork for local code/transaction-state comparisons",
+      "mode": "LOCAL_LAB",
+      "license": "LGPL_3_UPSTREAM",
+      "status": "SOURCE_READ",
+      "next": "Keep evidence and upstream attribution separate; no mainnet or third-party probing."
+    },
+    {
+      "id": "FIELD-DIFFERENCE",
+      "repo": "Juri-Halveth/halveth-field-difference-lab",
+      "ref": "main",
+      "commit": "8c6e1ab0f68d5dcc38d0e3068853beaec06067ab",
+      "path": "README.md",
+      "role": "same-input different-rule countermodel and negative control",
+      "mode": "LOCAL_SYNTHETIC",
+      "license": "APACHE_2",
+      "status": "SOURCE_READ",
+      "next": "Borrow experimental design, not assumptions about real-world causality."
+    }
+  ]
+}
