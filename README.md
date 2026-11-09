@@ -12,6 +12,6 @@ PowerShell-Werkzeuge und Zustandsdateien für die experimentelle Steuerung von A
 
 ## TRIAD TRAFFIC · lokale Live-Ereignisse verknüpfen (Prüfast)
 
-Die passive [Traffic-Brücke](docs/TRIAD_TRAFFIC.md) führt bereinigte Browser-Monitor-CSV-Dateien in die lokale TRIAD-Laufzeit über. Sie erkennt Zeitabstände zwischen Beobachtungen in Millisekunden und ordnet Ereignisse TTP-IDs zu. **Dies sind Ereignisabstände, keine HTTP-Antwortzeiten.** Ein optionaler Live-Nachlauf liest fortlaufend neue CSV-Zeilen, ohne selbst Netzwerkanfragen an die beobachtete Website zu schicken.
+Die passive [Traffic-Brücke](docs/TRIAD_TRAFFIC.md) führt bereinigte Browser-Monitor-CSV-Dateien in die lokale TRIAD-Laufzeit über. Sie erkennt Zeitabstände zwischen Beobachtungen in Millisekunden und ordnet Ereignisse TTP-IDs zu. **Dies sind Ereignisabstände, keine HTTP-Antwortzeiten.** Der Live-Nachlauf liest fortlaufend neue CSV-Zeilen. Mit `-AutoSwitch -Follow` erkennt er auch neue, zeitgestempelte V2-Dateien nach einem Sensor-Neustart. Er löst dabei selbst keine Netzwerkanfragen an die beobachtete Website aus.
 
 Das Projekt speichert Ergebnisse ausschließlich unter `.triad-runtime/traffic/` und hält sie aus Git heraus. Synthetische Regressionstests laufen in GitHub Actions auf Windows. Vor einer öffentlichen Open-Source-Freigabe muss der Projektinhaber die Lizenz ausdrücklich festlegen: Öffentlich sichtbarer Code ist ohne Lizenzdatei nicht automatisch Open Source.
