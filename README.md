@@ -21,3 +21,5 @@ pwsh -NoProfile -File ./scripts/Invoke-Triad.ps1 -Cycles 1
 ASTER liest Branch, Commit und geänderte Pfade. RACHEL vergleicht den Commit mit dem zuletzt gespeicherten Zyklus. SHELLA prüft bei Änderungen den vorbereiteten und den übrigen Diff. Bei einem Commitwechsel oder einem unlesbaren früheren Stand kennzeichnet sie zusätzlich den Verlauf zur Prüfung. Das Ergebnis steht in `.triad-runtime/STATE.json`.
 
 Der [Laufzeittest](scripts/Test-TriadRuntime.ps1) verwendet zwei temporäre Repositories. Er hält die Dateiliste gleich und verändert den Commit.
+
+Der [lokale Quellenatlas](catalog/HALVETH_CAPABILITIES.json) zeigt acht Bausteine mit ihrer Aufgabe, der zugehörigen Datei und dem geprüften Quellstand. Mit `./scripts/Show-HalvethCapabilities.ps1 -IncludeNotes` kannst du die Quelladressen und SHA-256-Werte offline nachschlagen.
