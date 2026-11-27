@@ -1,0 +1,120 @@
+{
+  "schema": "HALVETH_CAPABILITY_ATLAS_V1",
+  "capturedAt": "2026-11-09",
+  "purpose": "Curated, public-source capability map. No runtime ingestion and no permission to test third-party systems.",
+  "ownerIdea": "Juri Janovski / HALVETH: combine existing projects as attributed capabilities, protect source history, use controlled synthetic accounts.",
+  "authoring": "Implementation and curation assisted by ChatGPT; source rights and claims stay with their own repositories.",
+  "securityPolicy": {
+    "noSecretCapture": true,
+    "noThirdPartyReplay": true,
+    "localLabOnly": true,
+    "publicRegistryExcludesPrivateRepositories": true
+  },
+  "capabilities": [
+    {
+      "id": "KEEPER-TRIAD",
+      "repo": "Juri-Halveth/halveth-project0-keeper",
+      "ref": "main",
+      "commit": "e927394b0d465fd8034ce6b7ecc1ab13875e1fba",
+      "path": "constellation/README.md",
+      "role": "local Git observation, provenance and reviewed decisions",
+      "mode": "LOCAL",
+      "license": "REVIEW_REQUIRED_NO_ROOT_LICENSE",
+      "status": "SOURCE_READ",
+      "sourceSha256": "18a066efd01e214bd4cbde92e63d797ef87e6ba252b6271e87dc3f46a65ecc59",
+      "sourceBytes": 2425
+    },
+    {
+      "id": "SECURITY-WORKBENCH",
+      "repo": "Juri-Halveth/halveth-forschungslabor",
+      "ref": "main",
+      "commit": "8e6b49c78c5ed8fbdf5d5010e11b4040b9013fff",
+      "path": "branches/security-workbench/README.md",
+      "role": "synthetic Alice/Bob authorization boundary and localhost-only Burp lab",
+      "mode": "LOCAL_SYNTHETIC",
+      "license": "MIT_CODE_CC_BY_DOCS",
+      "status": "SOURCE_READ",
+      "sourceSha256": "0f6a5dfd56459ae604586f5e492eb1be544a139633508c34ea1e4eec84d7152b",
+      "sourceBytes": 6822
+    },
+    {
+      "id": "SECURITY-RESEARCH-HUB",
+      "repo": "Juri-Halveth/halveth-forschungslabor",
+      "ref": "main",
+      "commit": "8e6b49c78c5ed8fbdf5d5010e11b4040b9013fff",
+      "path": "branches/security-research-hub/README.md",
+      "role": "18 methods and 13 tool profiles, evidence plan and negative controls",
+      "mode": "READ_ONLY",
+      "license": "MIT_CODE_CC0_DATA_CC_BY_DOCS",
+      "status": "SOURCE_READ",
+      "sourceSha256": "2ab4e43ac027bd7d696187c49dae0f88827cd6a53af5cd89dde5654e7b78f15d",
+      "sourceBytes": 5843
+    },
+    {
+      "id": "ASTER-SOURCE-LENS",
+      "repo": "Juri-Halveth/halveth-forschungslabor",
+      "ref": "main",
+      "commit": "8e6b49c78c5ed8fbdf5d5010e11b4040b9013fff",
+      "path": "branches/aster-source-lens/README.md",
+      "role": "source versus presentation versus historical and current state",
+      "mode": "LOCAL_SYNTHETIC",
+      "license": "MIT_CODE_CC_BY_DOCS",
+      "status": "SOURCE_READ",
+      "sourceSha256": "7519ec62eed56032c45ebe873d5d339664981e981b34cbfb585db0713af3ba4b",
+      "sourceBytes": 1728
+    },
+    {
+      "id": "FEGEFEUER",
+      "repo": "Juri-Halveth/halveth-forschungslabor",
+      "ref": "main",
+      "commit": "8e6b49c78c5ed8fbdf5d5010e11b4040b9013fff",
+      "path": "branches/fegefeuer-provenance-transducer/README.md",
+      "role": "event identity, candidate retention and documented state transitions",
+      "mode": "LOCAL_SYNTHETIC",
+      "license": "MIT_CODE_CC_BY_DOCS",
+      "status": "SOURCE_READ",
+      "sourceSha256": "2faf3eab5c30387dd74b233bbccdad08e80f9ac2a8d4409bf4a442dfedaf46df",
+      "sourceBytes": 890
+    },
+    {
+      "id": "NOVA",
+      "repo": "Juri-Halveth/lucinet-seedspace",
+      "ref": "main",
+      "commit": "6151152eafa90c18dc64563872879dfc9da341f7",
+      "path": "nova/WORKBENCH.md",
+      "role": "local source memory, provenance, counterexamples and resumable work",
+      "mode": "LOCAL",
+      "license": "HALVETH_PIRL_2_SOURCE_AVAILABLE",
+      "status": "SOURCE_READ",
+      "sourceSha256": "7024bf63a01064a6e1a4233b22813b51afc282c97f35bebeee13279bb847e36d",
+      "sourceBytes": 14113
+    },
+    {
+      "id": "TRON-PROTOCOL-LAB",
+      "repo": "Juri-Halveth/halveth-tron-security-lab",
+      "ref": "develop",
+      "commit": "a4116f6dfe1505651d3c135007342c9bbb857c56",
+      "path": "README.md",
+      "role": "java-tron upstream fork for local code/transaction-state comparisons",
+      "mode": "LOCAL_LAB",
+      "license": "LGPL_3_UPSTREAM",
+      "status": "SOURCE_READ",
+      "sourceSha256": "f0cf6aca219e809170780757501570a157a1b55a20ed1d20ff3e5747720ff19f",
+      "sourceBytes": 14013
+    },
+    {
+      "id": "FIELD-DIFFERENCE",
+      "repo": "Juri-Halveth/halveth-field-difference-lab",
+      "ref": "main",
+      "commit": "8c6e1ab0f68d5dcc38d0e3068853beaec06067ab",
+      "path": "README.md",
+      "role": "same-input different-rule countermodel and negative control",
+      "mode": "LOCAL_SYNTHETIC",
+      "license": "APACHE_2",
+      "status": "SOURCE_READ",
+      "sourceSha256": "572aa37e01c27b82688ae6d573df670a393f6cca163c9626d9d6b371b0659ede",
+      "sourceBytes": 3868
+    }
+  ],
+  "sourceBytesCheckedOn": "2026-11-27"
+}

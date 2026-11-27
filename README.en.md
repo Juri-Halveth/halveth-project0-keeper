@@ -20,3 +20,5 @@ pwsh -NoProfile -File ./scripts/Invoke-Triad.ps1 -Cycles 1
 ASTER reads the branch, commit and changed paths. RACHEL compares the commit with the previous saved cycle. SHELLA checks staged and unstaged diffs for changes. A new commit or an unreadable prior state also flags the history for review. Read the decision in `.triad-runtime/STATE.json`.
 
 The [runtime test](scripts/Test-TriadRuntime.ps1) uses two temporary repositories and varies the commit while keeping the changed-file list fixed.
+
+The [local source catalog](catalog/HALVETH_CAPABILITIES.json) lists eight modules, their roles and the exact source files reviewed. Run `./scripts/Show-HalvethCapabilities.ps1 -IncludeNotes` to look up their source links and SHA-256 digests offline.
