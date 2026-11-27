@@ -1,0 +1,29 @@
+name: HALVETH Capability Atlas (offline)
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  atlas-contract:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify capability registry and local viewer
+        shell: pwsh
+        run: ./scripts/Test-HalvethCapabilities.ps1
+
+      - name: Ensure no tracked source mutation
+        shell: pwsh
+        run: |
+          $dirty = git status --porcelain
+          if ($dirty) {
+            Write-Host $dirty
+            throw 'Atlas validation mutated tracked source.'
+          }
+          Write-Host 'SOURCE TREE CLEAN'
