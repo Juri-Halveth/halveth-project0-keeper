@@ -8,3 +8,15 @@ PowerShell tools and state files for the experimental control plane of ASTER, RA
 
 - [Tools](scripts/)
 - [Concept and state files](constellation/)
+
+## Run one observation cycle
+
+Use Git and PowerShell 7. From the repository, run one local cycle.
+
+```powershell
+pwsh -NoProfile -File ./scripts/Invoke-Triad.ps1 -Cycles 1
+```
+
+ASTER reads the branch, commit and changed paths. RACHEL compares the commit with the previous saved cycle. SHELLA checks staged and unstaged diffs for changes. A new commit or an unreadable prior state also flags the history for review. Read the decision in `.triad-runtime/STATE.json`.
+
+The [runtime test](scripts/Test-TriadRuntime.ps1) uses two temporary repositories and varies the commit while keeping the changed-file list fixed.
