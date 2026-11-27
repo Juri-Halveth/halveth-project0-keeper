@@ -253,11 +253,30 @@ function Invoke-Rachel {
     )
 
 
+    $PreviousHead=$null
+    $HistoryState='FIRST_OBSERVATION'
+    if(Test-Path -LiteralPath $StatePath -PathType Leaf){
+        $HistoryState='UNREADABLE_PRIOR_STATE'
+        try{
+            $Prior=Get-Content -LiteralPath $StatePath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+            if($Prior.schema -eq 'HALVETH_TRIAD_RUNTIME_R1_1' -and
+               $Prior.ASTER.head -cmatch '^(?:[0-9a-f]{40}|[0-9a-f]{64})$'){
+                $PreviousHead=$Prior.ASTER.head
+                $HistoryState=if($PreviousHead -ceq $Observation.head){'SAME_HEAD'}else{'HEAD_CHANGED'}
+            }
+        }catch{
+            # A damaged local receipt cannot supply a previous source revision.
+        }
+    }
+
     $Continuity=[ordered]@{
 
         observation=$Observation
 
         recent_history=$Recent
+        previous_head=$PreviousHead
+        history_state=$HistoryState
+        history_review_required=($HistoryState -in @('HEAD_CHANGED','UNREADABLE_PRIOR_STATE'))
 
         counter_readings=@(
             'current state may already be valid'
@@ -296,38 +315,33 @@ function Invoke-Shella {
         $Continuity
     )
 
-    $Choice='OBSERVE'
-
-    if(
-        $Observation.changed_files.Count -gt 0
-    ){
+    $Dirty=$Observation.changed_files.Count -gt 0
+    $ReviewHistory=$Continuity.history_review_required
+    if($ReviewHistory){
+        $Choice=if($Dirty){'VERIFY_DIFF_AND_REVIEW_HISTORY'}else{'REVIEW_HISTORY'}
+        $Reason=if($Continuity.history_state -eq 'HEAD_CHANGED'){
+            'The observed revision changed since the previous cycle. Review the bound revisions.'
+        }else{
+            'The prior revision could not be read. Review the current history before relying on continuity.'
+        }
+    }elseif($Dirty){
         $Choice='VERIFY_DIFF'
+        $Reason='Source changes exist. Verify them before promotion.'
+    }else{
+        $Choice='OBSERVE'
+        $Reason='The current worktree has no source changes to verify.'
     }
-
-
     $Decision=[ordered]@{
-
         selected=$Choice
-
         reversible=$true
-
         remote_write=$false
-
-        reason=$(
-            if($Choice -eq 'VERIFY_DIFF'){
-
-                'Source changes exist; verify before promotion.'
-
-            }else{
-
-                'No source mutation requires intervention.'
-            }
-        )
+        reason=$Reason
+        history_state=$Continuity.history_state
+        previous_head=$Continuity.previous_head
+        observed_head=$Observation.head
     }
 
-
-    if($Choice -eq 'VERIFY_DIFF'){
-
+    if($Dirty){
         Invoke-RepoGit -GitArguments @('diff','--check') | Out-Null
         Invoke-RepoGit -GitArguments @('diff','--cached','--check') | Out-Null
     }
