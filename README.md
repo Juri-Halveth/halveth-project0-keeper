@@ -1,32 +1,23 @@
-<!-- HUB_LANGUAGES_V1 -->
-[Original / Deutsch](README.md) · [English](README.en.md) · [Русский](README.ru.md)
-<!-- /HUB_LANGUAGES_V1 -->
+[Deutsch](README.md) · [English](README.en.md) · [Русский](README.ru.md)
 
-# HALVETH Project0 Keeper
+# TRIAD · lokale Projektsteuerung
 
-## Juri Janovski / Juri Halveth – HALVETH VERACHEL STUDIOS
+PowerShell-Werkzeuge und Zustandsdateien für die experimentelle Steuerung von ASTER, RACHEL und SHELLA. Der aktuelle Quellstand dokumentiert Beobachtung, Kontinuität, Entscheidungen und Prüfungen; ein Handels- oder Ertragsdienst ist darin nicht enthalten.
 
-[Öffentliches Werkportfolio: alle elf privaten HALVETH-Werkzertifikate mit vollständigen Namen, Quellständen und SHA-256-Belegen](https://juri-halveth.github.io/werkzertifikate/).
+**Direkt ansehen:** [Werkzeuge und Startskripte](scripts/). Dies ist ein lokaler Quellprototyp, kein gehosteter Dienst.
 
-Dieses Repository war im dokumentierten Snapshot vom 28.09.2026 leer und erhält in Ausgabe 1.1 kein Werkzertifikat. Seitdem wurde der lokale TRIAD-Prototyp ergänzt; der historische Zertifikatsstand bleibt davon unberührt.
+[Konzept und Zustandsdateien](constellation/README.md) · [HALVETH Starship Lab (optional)](https://juri-halveth.github.io/universum/)
 
-Die dortigen Zertifikate sind private, mit Codex erstellte Werkdokumentation. Sie verleihen keine ISTQB-Qualifikation oder sonstige Personenzertifizierung.
+![HALVETH / NETZ – TRIAD: drei verknüpfte Zustandsknoten](HALVETH_NETZ_HERO.svg)
 
-## Aktueller Prototyp
+## Einen Beobachtungszyklus ausführen
 
-`scripts/Invoke-Triad.ps1` führt drei benannte Rollen in einer lokalen Prüfschleife aus:
-
-- **ASTER** liest Branch, Commit und geänderte Pfade dieses Repositorys.
-- **RACHEL** ergänzt die letzten fünf Commits und feste Gegenlesarten.
-- **SHELLA** wählt `OBSERVE` oder bei Änderungen `VERIFY_DIFF` und prüft dann ungestagte sowie gestagte Diffs mit `git diff --check`.
-
-Laufende Beobachtungen landen unter `.triad-runtime/STATE.json` und `.triad-runtime/LEDGER.jsonl`. Das Verzeichnis ist Git-ignoriert. Die versionierten Dateien unter `constellation/` sind Quellen und historische Snapshots, keine automatisch aktualisierte Laufzeitdatenbank. Insbesondere ist `REPOSITORIES.json` kein aktuelles Inventar aller GitHub-Repositories.
-
-Mit PowerShell 7 und Git lokal prüfen:
+Voraussetzungen sind Git und PowerShell 7. Starte im Repository einen lokalen Zyklus.
 
 ```powershell
-pwsh -NoProfile -File ./scripts/Test-Triad.ps1
-pwsh -NoProfile -File ./scripts/Invoke-Triad.ps1 -Intent 'Lokalen Stand prüfen' -Cycles 1
+pwsh -NoProfile -File ./scripts/Invoke-Triad.ps1 -Cycles 1
 ```
 
-Die Schleife liest Git-Daten des Keeper-Repositories und schreibt nur ihren lokalen Laufzeitstand. Sie ändert keinen Quellcode, startet keine anderen Agenten und schreibt nichts auf GitHub. Der [Integrity-Workflow](.github/workflows/triad-integrity.yml) prüft Parser, Rollenregister, drei lokale Zyklen und einen unveränderten Quellbaum. [Rollen und Grenzen](constellation/README.md).
+ASTER liest Branch, Commit und geänderte Pfade. RACHEL vergleicht den Commit mit dem zuletzt gespeicherten Zyklus. SHELLA prüft bei Änderungen den vorbereiteten und den übrigen Diff. Bei einem Commitwechsel oder einem unlesbaren früheren Stand kennzeichnet sie zusätzlich den Verlauf zur Prüfung. Das Ergebnis steht in `.triad-runtime/STATE.json`.
+
+Der [Laufzeittest](scripts/Test-TriadRuntime.ps1) verwendet zwei temporäre Repositories. Er hält die Dateiliste gleich und verändert den Commit.

@@ -31,6 +31,10 @@ jobs:
             -Intent "CI integrity observation" `
             -Cycles 3
 
+      - name: Verify runtime repository binding and failure handling
+        shell: pwsh
+        run: ./scripts/Test-TriadRuntime.ps1
+
 
       - name: Show runtime state
         shell: pwsh
