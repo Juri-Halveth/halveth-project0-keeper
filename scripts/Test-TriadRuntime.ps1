@@ -9,8 +9,13 @@ function Assert-Runtime($Condition,[string]$Message){
     if(!$Condition){throw $Message}
 }
 function Invoke-TestGit([string]$Directory,[string[]]$Arguments){
-    $Result=@(& git -C $Directory @Arguments 2>&1)
-    if($LASTEXITCODE -ne 0){throw ('Test fixture Git failed: '+($Arguments -join ' '))}
+    $SavedPreference=$ErrorActionPreference
+    try{
+        $ErrorActionPreference='Continue'
+        $Result=@(& git -C $Directory @Arguments 2>&1)
+        $ExitCode=$LASTEXITCODE
+    }finally{$ErrorActionPreference=$SavedPreference}
+    if($ExitCode -ne 0){throw ('Test fixture Git failed: '+($Arguments -join ' '))}
     return $Result
 }
 function Invoke-TestEngine([string]$Engine,[string]$Log){
@@ -52,6 +57,21 @@ try{
     Assert-Runtime ($State.ASTER.changed_files -contains '.triad-runtime-notes.txt') 'A source file with a similar runtime prefix was hidden.'
     Assert-Runtime (@($State.ASTER.changed_files | Where-Object {$_ -like '.triad-runtime/*'}).Count -eq 0) 'Generated runtime observations leaked into source changes.'
     Assert-Runtime (@(Invoke-TestGit $Foreign @('status','--porcelain')).Count -eq 0) 'The unrelated caller repository was changed.'
+
+    Assert-Runtime ($State.RACHEL.history_state -eq 'FIRST_OBSERVATION' -and $State.SHELLA.selected -eq 'VERIFY_DIFF') 'The first cycle did not classify the dirty fixture.'
+    Assert-Runtime ((Invoke-TestEngine $Engine (Join-Path $TestRoot 'same-head.log')) -eq 0) 'Repeat cycle failed.'
+    $Repeat=Get-Content -LiteralPath $StatePath -Raw | ConvertFrom-Json
+    Assert-Runtime ($Repeat.RACHEL.history_state -eq 'SAME_HEAD' -and $Repeat.SHELLA.selected -eq 'VERIFY_DIFF') 'Unchanged history unexpectedly requires review.'
+    Invoke-TestGit $Fixture @('-c','user.name=Local Test','-c','user.email=fixture@example.invalid','commit','--allow-empty','-m','Change history with identical source files') | Out-Null
+    Assert-Runtime ((Invoke-TestEngine $Engine (Join-Path $TestRoot 'changed-head.log')) -eq 0) 'History transition failed.'
+    $Changed=Get-Content -LiteralPath $StatePath -Raw | ConvertFrom-Json
+    Assert-Runtime (($Changed.ASTER.changed_files -join '|') -ceq ($Repeat.ASTER.changed_files -join '|')) 'The controlled file list changed.'
+    Assert-Runtime ($Changed.SHELLA.selected -eq 'VERIFY_DIFF_AND_REVIEW_HISTORY' -and $Changed.SHELLA.previous_head -eq $ExpectedHead -and $Changed.SHELLA.observed_head -ne $ExpectedHead) 'SHELLA ignored changed history with the same dirty file list.'
+    $ExpectedHead=$Changed.ASTER.head
+    Set-Content -LiteralPath $StatePath -Value '{' -Encoding UTF8
+    Assert-Runtime ((Invoke-TestEngine $Engine (Join-Path $TestRoot 'malformed-prior.log')) -eq 0) 'Malformed prior state prevented observation.'
+    $Recovered=Get-Content -LiteralPath $StatePath -Raw | ConvertFrom-Json
+    Assert-Runtime ($Recovered.RACHEL.history_state -eq 'UNREADABLE_PRIOR_STATE' -and $Recovered.SHELLA.selected -eq 'VERIFY_DIFF_AND_REVIEW_HISTORY') 'A damaged receipt silently bypassed history review.'
 
     $Before=(Get-FileHash -LiteralPath $StatePath -Algorithm SHA256).Hash
     $LedgerPath=Join-Path $Fixture '.triad-runtime/LEDGER.jsonl'
